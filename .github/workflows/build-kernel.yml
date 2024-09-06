@@ -1,43 +1,50 @@
 name: build-kernel
 on:
-  push:
-    branches: 
-      - main
-    tags:
-      - '*'
   workflow_dispatch:
 jobs:
-  build-stock:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Setup build environment"
-        run: curl https://raw.githubusercontent.com/akhilnarang/scripts/master/setup/android_build_env.sh | bash -
-      - name: "Clone repo, sync, and build"
-        run: repo init -u https://github.com/pa-gr/kernel_manifest -b android12-5.10-marble --depth=1 && repo sync && ./build.sh -t -c && mv aospa-gki-marble-*.zip aospa-gki-kernel.zip
-      - name: Generate release tag
-        id: tag
-        run: echo "::set-output name=release_tag::AOSPA_STOCK_GKI_$(date +"%Y.%m.%d")"
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
-          files: /home/runner/work/aospa-gki-kernel-build/aospa-gki-kernel-build/aospa-gki-kernel.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build-ksu:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+      #- name: "Setup build environment"
+      #  run: curl https://raw.githubusercontent.com/akhilnarang/scripts/master/setup/android_build_env.sh | bash -
       - name: "Setup build environment"
-        run: curl https://raw.githubusercontent.com/akhilnarang/scripts/master/setup/android_build_env.sh | bash -
-      - name: "Clone repo, sync, and build"
-        run: repo init -u https://github.com/pa-gr/kernel_manifest -b android12-5.10-marble --depth=1 && repo sync && cd common && curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash - && cd ../ && ./build.sh -t -c && mv aospa-gki-marble-*.zip aospa-gki-kernel-ksu.zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl git ccache pngcrush schedtool maven lib32ncurses5-dev xsltproc libxml2-utils squashfs-tools lzop flex build-essential bc libssl-dev libswitch-perl libxml-simple-perl zip unzip g++-multilib bison gperf zlib1g-dev automake device-tree-compiler
+          sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://storage.googleapis.com/git-repo-downloads/repo
+          sudo chmod a+rx /usr/local/bin/repo
+      - name: "Clone repo, and sync"
+        run: |
+          repo init -u https://github.com/tiltshiftfocus/kernel_manifest -b uvite-xiaomi-sm8450 --depth=1
+          repo sync
+          mkdir -p kernel_platform/device/xiaomi/marble-kernel/dtbs
+      - name: "Include KSU"
+        run: |
+          cd kernel_platform/xiaomi/sm8450
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -      
+      - name: "Build kernel"
+        run: |
+          cd kernel_platform/xiaomi/sm8450
+          ./build.sh marble
+      - name: "Zip output"
+        run: |
+          HOME="$(pwd)"
+          cd kernel_platform/device/xiaomi/marble-kernel
+          zip -r9 "${HOME}/marble-kernel-blobs.zip" *
+          cp Image $HOME/AnyKernel3
+          cd $HOME/AnyKernel3
+          zip -r9 "../marble-kernel.zip" * -x .git README.md *placeholder
       - name: Generate release tag
         id: tag
-        run: echo "::set-output name=release_tag::AOSPA_KSU_GKI_$(date +"%Y.%m.%d")"
+        run: echo "release_tag=AOSPA_KSU_GKI_$(date +'%Y.%m.%d')" >> "$GITHUB_OUTPUT"
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          files: /home/runner/work/aospa-gki-kernel-build/aospa-gki-kernel-build/aospa-gki-kernel-ksu.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          files: |
+            marble-kernel.zip
+            marble-kernel-blobs.zip
