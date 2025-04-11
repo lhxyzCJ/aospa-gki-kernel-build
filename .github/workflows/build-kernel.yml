@@ -3,41 +3,59 @@ on:
   workflow_dispatch:
 jobs:
   build-ksu:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
         with:
           swap-size-gb: 10
-      #- name: "Setup build environment"
+      #- name: Setup build environment
       #  run: curl https://raw.githubusercontent.com/akhilnarang/scripts/master/setup/android_build_env.sh | bash -
-      - name: "Setup build environment"
+      - name: Setup build environment
         run: |
           sudo apt-get update
           sudo apt-get install -y curl git ccache pngcrush schedtool maven lib32ncurses5-dev xsltproc libxml2-utils squashfs-tools lzop flex build-essential bc libssl-dev libswitch-perl libxml-simple-perl zip unzip g++-multilib bison gperf zlib1g-dev automake device-tree-compiler
-          sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://storage.googleapis.com/git-repo-downloads/repo
+          sudo curl --create-dirs -o /usr/local/bin/repo -L https://storage.googleapis.com/git-repo-downloads/repo
           sudo chmod a+rx /usr/local/bin/repo
-      - name: "Clone repo, and sync"
+      - name: Clone repo and sync
         run: |
-          repo init -u https://github.com/tiltshiftfocus/kernel_manifest -b uvite-xiaomi-sm8450 --depth=1
+          repo init -u https://github.com/bryanyee33/kernel_manifest -b uvite-xiaomi-sm8450 --depth=1
           repo sync
           mkdir -p kernel_platform/device/xiaomi/marble-kernel/dtbs
-      - name: "Include KSU"
+      - name: Include KSU
         run: |
           cd kernel_platform/xiaomi/sm8450
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -      
-      - name: "Build kernel"
+          rmdir KernelSU
+          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+      - name: Include SUS-FS
+        run: |
+          HOME="$(pwd)"
+          cp -r susfs4ksu/kernel_patches/* kernel_platform/xiaomi/sm8450
+          cd kernel_platform/xiaomi/sm8450/KernelSU
+          patch -p1 < 10_enable_susfs_for_ksu.patch
+          cd ..
+          patch -p1 < 50_add_susfs_in_gki-android12-5.10.patch
+          cd $HOME/susfs4ksu
+          ./build_ksu_module.sh
+          mv ksu_module_susfs.zip ..
+      - name: Include other KSU manager signatures
+        run: |
+          sed -i '/return (check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH) ||/a\
+              check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549") /*dummy.keystore*/ || \
+              check_v2_signature(path, 0x3e6, "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7") /*KernelSU-Next*/ || \
+              \' kernel_platform/xiaomi/sm8450/KernelSU/kernel/apk_sign.c
+      - name: Build kernel
         run: |
           cd kernel_platform/xiaomi/sm8450
           ./build.sh marble
-      - name: "Zip output"
+      - name: Zip output
         run: |
-          HOME="$(pwd)"
-          cd kernel_platform/device/xiaomi/marble-kernel
-          zip -r9 "${HOME}/marble-kernel-blobs.zip" *
-          cp Image $HOME/AnyKernel3
-          cd $HOME/AnyKernel3
-          zip -r9 "../marble-kernel.zip" * -x .git README.md *placeholder
+          cp kernel_platform/device/xiaomi/marble-kernel/Image AnyKernel3
+          cd AnyKernel3
+          rm -r .git README.md
+          find . -type f -name 'placeholder' -delete
+          find . -type d -empty -delete
+          zip -r9 "../marble-kernel.zip" *
       - name: Generate release tag
         id: tag
         run: echo "release_tag=AOSPA_KSU_GKI_$(date +'%Y.%m.%d')" >> "$GITHUB_OUTPUT"
@@ -47,4 +65,14 @@ jobs:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
             marble-kernel.zip
-            marble-kernel-blobs.zip
+            ksu_module_susfs.zip
+      - name: Upload marble-kernel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: marble-kernel
+          path: AnyKernel3/*
+      - name: Upload blobs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blobs
+          path: kernel_platform/device/xiaomi/marble-kernel/*
