@@ -25,8 +25,8 @@ jobs:
       - name: Include KSU
         run: |
           cd kernel_platform/xiaomi/sm8450
-          rmdir KernelSU
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+          rmdir KernelSU-Next
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -
       - name: Include SUS-FS
         run: |
           HOME="$(pwd)"
