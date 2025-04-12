@@ -27,17 +27,17 @@ jobs:
           cd kernel_platform/xiaomi/sm8450
           rmdir KernelSU
           curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs
-      # - name: Include SUS-FS
-      #   run: |
-      #     HOME="$(pwd)"
-      #     cp -r susfs4ksu/kernel_patches/* kernel_platform/xiaomi/sm8450
-      #     cd kernel_platform/xiaomi/sm8450/KernelSU-Next
-      #     patch -p1 < 10_enable_susfs_for_ksu.patch
-      #     cd ..
-      #     patch -p1 < 50_add_susfs_in_gki-android12-5.10.patch
-      #     cd $HOME/susfs4ksu
-      #     ./build_ksu_module.sh
-      #     mv ksu_module_susfs.zip ..
+      - name: Include SUS-FS
+        run: |
+          HOME="$(pwd)"
+          cp -r susfs4ksu/kernel_patches/* kernel_platform/xiaomi/sm8450
+          cd kernel_platform/xiaomi/sm8450/KernelSU-Next
+          patch -p1 < 10_enable_susfs_for_ksu.patch
+          cd ..
+          patch -p1 < 50_add_susfs_in_gki-android12-5.10.patch
+          cd $HOME/susfs4ksu
+          ./build_ksu_module.sh
+          mv ksu_module_susfs.zip ..
       # - name: Include other KSU manager signatures
       #   run: |
       #     sed -i '/return (check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH) ||/a\
