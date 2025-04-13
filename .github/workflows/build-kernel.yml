@@ -43,36 +43,6 @@ jobs:
       #         check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549") /*dummy.keystore*/ || \
       #         check_v2_signature(path, 0x3e6, "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7") /*KernelSU-Next*/ || \
       #         \' kernel_platform/xiaomi/sm8450/KernelSU-Next/kernel/apk_sign.c
-      - name: Set Misc Config
-        run: |
-          cd kernel_platform/xiaomi/sm8450
-          scripts/config --file out/.config \
-            -e TCP_CONG_ADVANCED \
-            -e TCP_CONG_WESTWOOD \
-            -e DEFAULT_WESTWOOD \
-            -e KPROBES \
-            -e HAVE_KPROBES \
-            -e KPROBE_EVENTS 
-      - name: Set KSU and KSU SUSFS Config
-        run: |
-          cd kernel_platform/xiaomi/sm8450
-          scripts/config --file out/.config \
-            -e KSU \
-            -e KSU_SUSFS_HAS_MAGIC_MOUNT \
-            -e KSU_SUSFS_SUS_PATH \
-            -e KSU_SUSFS_SUS_MOUNT \
-            -e KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT \
-            -e KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT \
-            -e KSU_SUSFS_SUS_KSTAT \
-            -e KSU_SUSFS_SUS_OVERLAYFS \
-            -e KSU_SUSFS_TRY_UMOUNT \
-            -e KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT \
-            -e KSU_SUSFS_SPOOF_UNAME \
-            -e KSU_SUSFS_ENABLE_LOG \
-            -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-            -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-            -e KSU_SUSFS_OPEN_REDIRECT \
-            -e KSU_SUSFS_SUS_SU 
       - name: Build kernel
         run: |
           cd kernel_platform/xiaomi/sm8450
