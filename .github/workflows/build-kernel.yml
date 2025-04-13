@@ -47,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: marble-kernel
-          path: AnyKernel3/*/device/xiaomi/marble-kernel/*
+          path: AnyKernel3/*
