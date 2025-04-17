@@ -29,7 +29,8 @@ jobs:
       - name: Set Zip filename variable
         id: zipname
         run: |
-          echo "zipfile="AOSPA_marble_KernelSU-Next-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_${{ github.sha:0:8 }}.zip" >> "$GITHUB_OUTPUT"
+          COMMIT_HASH=$(${{ github.sha }} | cut -c1-8)
+          echo "zipfile="AOSPA_marble_KernelSU-Next-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_$COMMIT_HASH.zip" >> "$GITHUB_OUTPUT"
       - name: Zip output
         run: |
           cp kernel_platform/device/xiaomi/marble-kernel/Image AnyKernel3
