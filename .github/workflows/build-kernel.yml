@@ -47,7 +47,7 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
-            ${{ steps.zipname.outputs.zipfile }}"
+            ${{ steps.zipname.outputs.zipfile }}
       - name: Upload marble-kernel artifact
         uses: actions/upload-artifact@v4
         with:
