@@ -26,6 +26,10 @@ jobs:
         run: |
           cd kernel_platform/xiaomi/sm8450
           ./build.sh --ksu marble
+      - name: Set Zip filename variable
+        id: zipname
+        run: |
+          echo "zipfile="AOSPA_marble_KernelSU-Next-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_${{ github.sha:0:8 }}.zip" >> "$GITHUB_OUTPUT"
       - name: Zip output
         run: |
           cp kernel_platform/device/xiaomi/marble-kernel/Image AnyKernel3
@@ -33,16 +37,16 @@ jobs:
           rm -r .git README.md
           find . -type f -name 'placeholder' -delete
           find . -type d -empty -delete
-          zip -r9 "../marble-kernel.zip" *
+          zip -r9 "../${{ steps.zipname.outputs.zipfile }}" *
       - name: Generate release tag
         id: tag
-        run: echo "release_tag=AOSPA_KSU_GKI_$(date +'%Y.%m.%d')" >> "$GITHUB_OUTPUT"
+        run: echo "release_tag=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
-            marble-kernel.zip
+            ${{ steps.zipname.outputs.zipfile }}"
       - name: Upload marble-kernel artifact
         uses: actions/upload-artifact@v4
         with:
