@@ -21,7 +21,7 @@ jobs:
         id: zipname
         run: |
           COMMIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
-          echo "zipfile="AOSPA_marble_KernelSU-Next-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_$COMMIT_HASH.zip"" >> "$GITHUB_OUTPUT"
+          echo "zipfile="AOSPA_marble_KernelSU-Next-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_nolto_$COMMIT_HASH.zip"" >> "$GITHUB_OUTPUT"
       - name: Clone repo and sync
         run: |
           repo init -u https://github.com/tiltshiftfocus/kernel_manifest -b vauxite-next-susfs --depth=1
