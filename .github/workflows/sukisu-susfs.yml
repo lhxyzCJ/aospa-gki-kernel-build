@@ -1,4 +1,4 @@
-name: build-kernel
+name: SukiSU with SuSFS
 on:
   workflow_dispatch:
 jobs:

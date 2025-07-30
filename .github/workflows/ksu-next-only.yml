@@ -1,4 +1,4 @@
-name: build-kernel
+name: KSU Next Only
 on:
   workflow_dispatch:
 jobs:
