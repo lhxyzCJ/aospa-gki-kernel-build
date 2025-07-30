@@ -1,8 +1,14 @@
 name: build-kernel
 on:
   workflow_dispatch:
+    inputs:
+      build_args:
+        description: 'Arguments for build.sh script'
+        required: true
+        default: '--sukisu --susfs marble'
+
 jobs:
-  build-ksu:
+  build-kernel:
     runs-on: ubuntu-22.04
     steps:
       - name: Set Swap Space
@@ -20,8 +26,7 @@ jobs:
       - name: Set Zip filename variable
         id: zipname
         run: |
-          COMMIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
-          echo "zipfile="AOSPA_marble_SukiSU-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3_$COMMIT_HASH.zip"" >> "$GITHUB_OUTPUT"
+          echo "zipfile="AOSPA_marble_SukiSU-SUSFS_$(date +%Y%m%d_%H%M%S)_anykernel3.zip"" >> "$GITHUB_OUTPUT"
       - name: Clone repo and sync
         run: |
           repo init -u https://github.com/tiltshiftfocus/kernel_manifest -b vauxite-next-susfs --depth=1
@@ -30,7 +35,7 @@ jobs:
       - name: Build kernel
         run: |
           cd kernel_platform/xiaomi/sm8450
-          ./build.sh --ksu marble
+          ./build.sh ${{ github.event.inputs.build_args || '--sukisu --susfs marble' }}
       - name: Zip output
         run: |
           cp kernel_platform/device/xiaomi/marble-kernel/Image AnyKernel3
